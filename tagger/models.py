@@ -17,10 +17,3 @@ class Emoji(models.Model):
     def __str__(self):
         return self.value
 
-
-class EmojiSequence(models.Model):
-    emoji = models.ManyToManyField('Emoji', related_name='sequences')
-    tags = models.ManyToManyField('Tag', related_name='sequences')
-
-    def __str__(self):
-        return f'{",".join(self.emoji)} ({",".join(self.tags)})'

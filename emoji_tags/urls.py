@@ -20,5 +20,5 @@ from tagger import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('tagger.urls'))
+    path('api/', include('tagger.urls'))
 ]

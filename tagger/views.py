@@ -1,18 +1,44 @@
 from django.shortcuts import render
-
-from .models import Emoji, EmojiSequence, Tag
-
+from django.db.models import Count
+from rest_framework import viewsets
+from .models import Emoji, Tag
+from .serializers import EmojiCreateSerializer, EmojiGetSerializer, TagGetSerializer
 from random import choices
 
-# Create your views here.
 
+class EmojiViewSet(viewsets.ModelViewSet):
 
-def tag_mode(request, length=3):
-    context = {}
-    if request.method == 'GET':
-        all_emoji = Emoji.objects.all()
-        context['emoji'] = choices(all_emoji, k=length)
+    def get_queryset(self):
 
-    elif request.method == 'POST':
-        pass
-    return render(request, 'tagger/tag-mode.html', context)
+        count = self.request.query_params.get('count', 4)
+        types = self.request.query_params.get('types')
+
+        if types == 'tagged':
+            emoji = Emoji.objects.annotate(
+                tag_count=Count('tags')).filter(tag_count__gt=0)
+            if emoji.all().count() == 0:
+                return []
+            else:
+                return choices(emoji, k=int(count))
+
+        elif types == 'untagged':
+            emoji = Emoji.objects.annotate(
+                tag_count=Count('tags')).filter(tag_count=0)
+            if emoji.all().count() == 0:
+                return []
+            else:
+                return choices(emoji, k=int(count))
+
+        elif types == 'mixed':
+            return choices(Emoji.objects.all(), k=int(count))
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return EmojiCreateSerializer
+        else:
+            return EmojiGetSerializer
+    
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagGetSerializer
